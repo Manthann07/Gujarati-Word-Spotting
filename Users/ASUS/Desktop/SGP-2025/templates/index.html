@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Search App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        .drag-over {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+            transform: scale(1.02);
+        }
+        .uploading {
+            border-color: #10b981 !important;
+            background-color: #f0fdf4 !important;
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .highlight {
+            background-color: yellow;
+            padding: 2px;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100">
+    <!-- Header -->
+    <header class="py-8 bg-gradient-to-r from-blue-700 to-purple-700 shadow">
+        <div class="max-w-2xl mx-auto text-center">
+            <h1 class="text-4xl font-extrabold text-white mb-2 drop-shadow">PDF Search App</h1>
+            <p class="text-blue-100 text-lg">Upload, search, and view PDFs with AI-powered semantic search</p>
+            <p class="text-blue-200 text-sm mt-2">Supports English, Gujarati, Hindi, and other Indian languages</p>
+        </div>
+    </header>
+
+    <!-- Notifications -->
+    <div id="notifications" class="flex flex-col items-center mt-4"></div>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col items-center justify-center px-2">
+        <!-- Upload Section -->
+        <section class="w-full max-w-xl mt-8 mb-6">
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <div id="upload-container" class="w-full max-w-xl mx-auto">
+                    <div id="upload-area" class="border-2 border-dashed rounded-xl p-10 text-center bg-white transition-all duration-300 cursor-pointer relative">
+                        <div id="upload-content">
+                            <div class="flex flex-col items-center justify-center mb-4">
+                                <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" class="text-blue-400 mb-2" viewBox="0 0 24 24">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7,10 12,15 17,10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                <h3 class="text-xl font-bold text-gray-700 mb-1">Upload PDF Document</h3>
+                                <p class="text-gray-500 mb-2">Drag and drop your PDF file here, or click to browse</p>
+                                <p class="text-blue-600 text-sm mb-2">Supports Gujarati, Hindi, English, and other languages</p>
+                            </div>
+                            <input type="file" accept=".pdf" id="file-input" class="absolute inset-0 opacity-0 cursor-pointer">
+                            <label for="file-input" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-medium shadow hover:bg-blue-700 transition-colors cursor-pointer mb-2">Browse Files</label>
+                            <div class="mt-4 text-sm text-gray-400">
+                                <p>Supported format: PDF</p>
+                                <p>Maximum file size: 50MB</p>
+                                <p>Languages: English, Gujarati, Hindi, Tamil, Telugu, Kannada, Malayalam, Bengali, Marathi, Odia, Punjabi</p>
+                            </div>
+                        </div>
+                        <div id="upload-progress" class="hidden w-full">
+                            <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden mb-4">
+                                <div id="progress-bar" class="h-full bg-gradient-to-r from-green-400 to-green-600 transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <p id="progress-text" class="text-green-700 font-semibold">Uploading PDF... 0%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search Section -->
+        <section id="search-section" class="w-full max-w-xl mb-6 hidden">
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">Search in PDF</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="search-input" placeholder="Enter your search query..." 
+                               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button id="search-btn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium shadow hover:bg-blue-700 transition-colors">
+                            Search
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-500 mt-2">Search in English, Gujarati, Hindi, or any supported language</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PDF Viewer Section -->
+        <section class="w-full max-w-3xl mb-8">
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <div id="pdf-viewer">
+                    <div class="text-center text-gray-500">
+                        <svg width="64" height="64" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-4" viewBox="0 0 24 24">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10,9 9,9 8,9"></polyline>
+                        </svg>
+                        <p>Upload a PDF to get started</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t py-4 text-center text-gray-400 text-sm">
+        &copy; 2025 PDF Search App. Built with Flask, Tailwind, and AI-powered search.
+    </footer>
+
+    <script>
+        // Global variables
+        let currentPdfData = null;
+        let searchResults = null;
+
+        // DOM elements
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const uploadContent = document.getElementById('upload-content');
+        const uploadProgress = document.getElementById('upload-progress');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const searchSection = document.getElementById('search-section');
+        const searchInput = document.getElementById('search-input');
+        const searchBtn = document.getElementById('search-btn');
+        const pdfViewer = document.getElementById('pdf-viewer');
+        const notifications = document.getElementById('notifications');
+
+        // Event listeners
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+        searchBtn.addEventListener('click', handleSearch);
+
+        // Drag and drop handlers
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadArea.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('drag-over');
+            const files = Array.from(e.dataTransfer.files);
+            const pdfFile = files.find(file => file.type === 'application/pdf');
+            if (pdfFile) {
+                handleFileUpload(pdfFile);
+            } else {
+                showNotification('Please drop a valid PDF file', 'error');
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileUpload(file);
+            }
+        }
+
+        // File upload handler
+        async function handleFileUpload(file) {
+            if (file.type !== 'application/pdf') {
+                showNotification('Please select a valid PDF file', 'error');
+                return;
+            }
+            if (file.size > 50 * 1024 * 1024) {
+                showNotification('File size should be less than 50MB', 'error');
+                return;
+            }
+
+            showUploadProgress();
+            
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload-pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    currentPdfData = result;
+                    searchResults = null;
+                    showNotification(`PDF "${result.filename}" uploaded successfully!`, 'success');
+                    showSearchSection();
+                    displayPdfInfo(result);
+                } else {
+                    showNotification(result.error || 'Upload failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                showNotification('Upload failed. Please try again.', 'error');
+            } finally {
+                hideUploadProgress();
+            }
+        }
+
+        // Search handler
+        async function handleSearch() {
+            const query = searchInput.value.trim();
+            if (!query) {
+                showNotification('Please enter a search query', 'error');
+                return;
+            }
+
+            if (!currentPdfData) {
+                showNotification('No PDF uploaded', 'error');
+                return;
+            }
+
+            searchBtn.disabled = true;
+            searchBtn.textContent = 'Searching...';
+
+            try {
+                const response = await fetch('/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        pdf_filename: currentPdfData.filename
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    searchResults = result;
+                    showNotification(`Found ${result.results.length} results for "${query}"`, 'success');
+                    displaySearchResults(result);
+                } else {
+                    showNotification(result.error || 'Search failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                showNotification('Search failed. Please try again.', 'error');
+            } finally {
+                searchBtn.disabled = false;
+                searchBtn.textContent = 'Search';
+            }
+        }
+
+        // UI helpers
+        function showUploadProgress() {
+            uploadContent.classList.add('hidden');
+            uploadProgress.classList.remove('hidden');
+            uploadArea.classList.add('uploading');
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                if (progress >= 90) {
+                    clearInterval(interval);
+                    progress = 90;
+                }
+                updateProgress(progress);
+            }, 200);
+        }
+
+        function hideUploadProgress() {
+            updateProgress(100);
+            setTimeout(() => {
+                uploadContent.classList.remove('hidden');
+                uploadProgress.classList.add('hidden');
+                uploadArea.classList.remove('uploading');
+                updateProgress(0);
+            }, 500);
+        }
+
+        function updateProgress(percent) {
+            progressBar.style.width = `${percent}%`;
+            progressText.textContent = `Uploading PDF... ${percent}%`;
+        }
+
+        function showSearchSection() {
+            searchSection.classList.remove('hidden');
+            searchInput.value = '';
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `px-4 py-2 rounded mb-2 shadow ${
+                type === 'error' ? 'bg-red-100 border border-red-300 text-red-700' : 
+                'bg-green-100 border border-green-300 text-green-700'
+            }`;
+            notification.textContent = message;
+            
+            notifications.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, type === 'error' ? 5000 : 3000);
+        }
+
+        function displayPdfInfo(pdfData) {
+            pdfViewer.innerHTML = `
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-gray-700 mb-4">PDF Information</h3>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p><strong>Filename:</strong> ${pdfData.filename}</p>
+                        <p><strong>Total Pages:</strong> ${pdfData.total_pages}</p>
+                        <p><strong>Processing Method:</strong> ${pdfData.processing_method}</p>
+                        <p><strong>File Size:</strong> ${(pdfData.pdf_info.file_size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                </div>
+                <div id="pdf-content">
+                    <h4 class="text-lg font-semibold text-gray-700 mb-3">PDF Content Preview</h4>
+                    <div class="max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-4">
+                        ${pdfData.pages.map(page => `
+                            <div class="mb-4 p-3 bg-white rounded border">
+                                <h5 class="font-semibold text-blue-600 mb-2">Page ${page.page}</h5>
+                                <p class="text-sm text-gray-700 whitespace-pre-wrap">${page.text.substring(0, 300)}${page.text.length > 300 ? '...' : ''}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function displaySearchResults(results) {
+            const pdfContent = document.getElementById('pdf-content');
+            if (!pdfContent) return;
+
+            pdfContent.innerHTML = `
+                <h4 class="text-lg font-semibold text-gray-700 mb-3">Search Results for "${results.query}"</h4>
+                <div class="max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-4">
+                    ${results.results.map(result => `
+                        <div class="mb-4 p-3 bg-white rounded border">
+                            <h5 class="font-semibold text-blue-600 mb-2">Page ${result.page}</h5>
+                            <p class="text-sm text-gray-700 mb-2"><strong>Score:</strong> ${result.score.toFixed(3)}</p>
+                            <p class="text-sm text-gray-700 whitespace-pre-wrap">${highlightText(result.text, results.query)}</p>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="highlight">$1</span>');
+        }
+
+        // Enter key handler for search
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleSearch();
+            }
+        });
+    </script>
+</body>
+</html> 

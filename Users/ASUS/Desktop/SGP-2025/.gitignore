@@ -1,0 +1,13 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+server/venv/
+
+# Environment variables
+.env
+
+# Uploads or generated files
+uploads/
