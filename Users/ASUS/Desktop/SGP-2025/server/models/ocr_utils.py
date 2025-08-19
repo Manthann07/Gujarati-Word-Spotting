@@ -506,4 +506,77 @@ class OCRProcessor:
             
         except Exception as e:
             print(f"❌ EasyOCR failed: {e}")
-            return "" 
+            return ""
+
+    def normalize_gujarati_text(self, text: str) -> str:
+        """Normalize Gujarati text for better search and matching"""
+        if not text:
+            return text
+        
+        # Normalize Unicode characters
+        import unicodedata
+        normalized_text = unicodedata.normalize('NFC', text)
+        
+        # Remove common OCR artifacts and normalize spacing
+        normalized_text = ' '.join(normalized_text.split())
+        
+        # Fix common Gujarati OCR mistakes
+        replacements = {
+            '|': '।',  # Fix vertical bar to Gujarati danda
+            '॥': '॥',  # Fix double danda
+            '0': '૦',  # Fix English 0 to Gujarati 0
+            '1': '૧',  # Fix English 1 to Gujarati 1
+            '2': '૨',  # Fix English 2 to Gujarati 2
+            '3': '૩',  # Fix English 3 to Gujarati 3
+            '4': '૪',  # Fix English 4 to Gujarati 4
+            '5': '૫',  # Fix English 5 to Gujarati 5
+            '6': '૬',  # Fix English 6 to Gujarati 6
+            '7': '૭',  # Fix English 7 to Gujarati 7
+            '8': '૮',  # Fix English 8 to Gujarati 8
+            '9': '૯',  # Fix English 9 to Gujarati 9
+        }
+        
+        # Apply replacements
+        for old, new in replacements.items():
+            normalized_text = normalized_text.replace(old, new)
+        
+        return normalized_text
+
+    def find_gujarati_matches(self, text: str, query: str) -> List[Dict[str, Any]]:
+        """Find all matches of Gujarati text in the given text"""
+        if not text or not query:
+            return []
+        
+        matches = []
+        normalized_text = self.normalize_gujarati_text(text)
+        normalized_query = self.normalize_gujarati_text(query)
+        
+        # Find all occurrences of the query in the text
+        start_pos = 0
+        while True:
+            pos = normalized_text.find(normalized_query, start_pos)
+            if pos == -1:
+                break
+            
+            # Extract context around the match
+            context_start = max(0, pos - 50)
+            context_end = min(len(normalized_text), pos + len(normalized_query) + 50)
+            context = normalized_text[context_start:context_end]
+            
+            # Add ellipsis if we're not at the beginning/end
+            if context_start > 0:
+                context = "..." + context
+            if context_end < len(normalized_text):
+                context = context + "..."
+            
+            matches.append({
+                'position': pos,
+                'context': context,
+                'query': normalized_query,
+                'context_start': context_start,
+                'context_end': context_end
+            })
+            
+            start_pos = pos + 1
+        
+        return matches 

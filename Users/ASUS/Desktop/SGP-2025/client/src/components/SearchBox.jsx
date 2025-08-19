@@ -18,9 +18,10 @@ const SearchBox = ({ selectedPDF, onSearchResults, onSearchError }) => {
     }
     setIsSearching(true);
     try {
-      const results = await searchPDF(query, selectedPDF);
+      const trimmed = query.trim();
+      const results = await searchPDF(trimmed, selectedPDF);
       setSearchHistory(prev => {
-        const newHistory = [query, ...prev.filter(item => item !== query)].slice(0, 5);
+        const newHistory = [trimmed, ...prev.filter(item => item !== trimmed)].slice(0, 5);
         return newHistory;
       });
       onSearchResults(results);

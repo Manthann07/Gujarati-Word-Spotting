@@ -151,9 +151,19 @@ async def search_pdf(request: SearchRequest):
         raise HTTPException(status_code=404, detail="PDF file not found")
     
     try:
-        # Perform search using the model
-        results = await model_utils.search_text(pdf_path, query)
+        # Normalize and trim query to avoid invisible chars interfering with matching
+        query_norm = query.strip()
+        # First try exact text matching for better highlighting
+        exact_results = model_utils.search_with_exact_matching(pdf_path, query_norm)
+        
+        # If we found exact matches, return them
+        if exact_results["results"]:
+            return JSONResponse(content=exact_results)
+        
+        # If no exact matches, fall back to semantic search
+        results = await model_utils.search_text(pdf_path, query_norm)
         return JSONResponse(content=results)
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error searching PDF: {str(e)}")
 
@@ -165,6 +175,16 @@ async def list_pdfs():
         if filename.endswith('.pdf'):
             pdf_files.append(filename)
     return {"pdfs": pdf_files}
+
+@app.get("/test-search")
+async def test_search():
+    """Test endpoint to verify search functionality"""
+    return {
+        "message": "Search endpoint is working",
+        "test_query": "નવલકથા",
+        "test_text": "આ એક નવલકથા છે જેમાં ઇતિહાસ વિશે લખવામાં આવ્યું છે",
+        "contains_query": "નવલકથા" in "આ એક નવલકથા છે જેમાં ઇતિહાસ વિશે લખવામાં આવ્યું છે"
+    }
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000) 
