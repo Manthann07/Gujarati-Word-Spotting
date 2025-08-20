@@ -353,294 +353,343 @@ const PDFViewer = ({ pdfData, searchResults, currentQuery }) => {
 
   if (!pdfData) {
     return (
-      <div className="flex items-center justify-center min-h-[300px] bg-gray-50 rounded-xl">
-        <div className="text-center text-gray-400">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mx-auto mb-2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14,2 14,8 20,8"></polyline>
-            <line x1="16" y1="13" x2="8" y2="13"></line>
-            <line x1="16" y1="17" x2="8" y2="17"></line>
-            <polyline points="10,9 9,9 8,9"></polyline>
-          </svg>
-          <h3 className="text-lg font-semibold">No PDF Loaded</h3>
-          <p className="text-gray-500">Upload a PDF document to start viewing</p>
+      <div className="flex items-center justify-center min-h-[400px] bg-slate-800/30 rounded-3xl border border-slate-600/30">
+        <div className="text-center text-slate-400">
+          <div className="w-24 h-24 bg-slate-700/50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-500">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14,2 14,8 20,8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10,9 9,9 8,9"></polyline>
+            </svg>
+          </div>
+          <h3 className="text-2xl font-bold text-slate-300 mb-3">No PDF Loaded</h3>
+          <p className="text-slate-400 text-lg">Upload a PDF document to start viewing and searching</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-white rounded-xl shadow p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
-            className="px-4 py-2 bg-gray-200 rounded-lg font-semibold text-gray-600 hover:bg-blue-100 disabled:opacity-50"
-          >
-            ← Previous
-          </button>
-          <span className="font-medium text-gray-700">
-            Page {currentPage} of {pdfData.total_pages}
-            {currentQuery && (
-              <span className="ml-2 text-blue-600 text-sm">
-                • Searching for "{currentQuery}"
-              </span>
-            )}
-          </span>
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage >= pdfData.total_pages}
-            className="px-4 py-2 bg-gray-200 rounded-lg font-semibold text-gray-600 hover:bg-blue-100 disabled:opacity-50"
-          >
-            Next →
-          </button>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleZoomChange(zoom - 0.1)}
-            disabled={zoom <= 0.5}
-            className="w-9 h-9 bg-gray-200 rounded-lg font-bold text-lg text-gray-700 hover:bg-blue-100 disabled:opacity-50"
-          >
-            -
-          </button>
-          <span className="font-medium text-gray-700">{Math.round(zoom * 100)}%</span>
-          {currentQuery && (
-            <span className="ml-2 text-blue-600 text-xs">
-              🔍 "{currentQuery}"
-            </span>
-          )}
-          <button
-            onClick={() => handleZoomChange(zoom + 0.1)}
-            disabled={zoom >= 3}
-            className="w-9 h-9 bg-gray-200 rounded-lg font-bold text-lg text-gray-700 hover:bg-blue-100 disabled:opacity-50"
-          >
-            +
-          </button>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1 text-sm text-gray-700 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showSearchHighlights}
-              onChange={(e) => setShowSearchHighlights(e.target.checked)}
-              className="accent-blue-500"
-            />
-            Show Highlights
-            {currentQuery && (
-              <span className="ml-1 text-blue-600 text-xs">
-                for "{currentQuery}"
-              </span>
-            )}
-          </label>
-          {currentQuery && (
-            <button
-              onClick={() => {
-                console.log('🧪 Testing highlighting for:', currentQuery);
-                console.log('🧪 Current page text length:', currentPageData?.text?.length);
-                console.log('🧪 Search results:', searchResults);
-                
-                // Test if the query exists in the text
-                if (currentPageData?.text) {
-                  const containsQuery = currentPageData.text.includes(currentQuery);
-                  console.log('🧪 Query found in text:', containsQuery);
-                  
-                  // Test regex matching
-                  const escapedQuery = currentQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                  const regex = new RegExp(escapedQuery, 'giu');
-                  const matches = currentPageData.text.match(regex);
-                  console.log('🧪 Regex matches:', matches);
-                  
-                  // Test case-insensitive search
-                  const lowerText = currentPageData.text.toLowerCase();
-                  const lowerQuery = currentQuery.toLowerCase();
-                  const lowerMatch = lowerText.includes(lowerQuery);
-                  console.log('🧪 Lowercase match:', lowerMatch);
-                }
-              }}
-              className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200"
-              title="Test highlighting"
-            >
-              🧪 Test
-            </button>
-          )}
-          {currentQuery && (
-            <button
-              onClick={async () => {
-                try {
-                  const response = await fetch('http://localhost:8000/test-search');
-                  const data = await response.json();
-                  console.log('🧪 Backend test result:', data);
-                } catch (error) {
-                  console.error('🧪 Backend test failed:', error);
-                }
-              }}
-              className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200"
-              title="Test backend"
-            >
-              🔧 Backend
-            </button>
-          )}
-          {currentQuery && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-gray-600">Highlight:</span>
-              <select
-                value={highlightMethod}
-                onChange={(e) => setHighlightMethod(e.target.value)}
-                className="px-2 py-1 bg-white border border-gray-300 rounded text-xs"
-              >
-                <option value="auto">Auto</option>
-                <option value="simple">Simple</option>
-                <option value="regex">Regex</option>
-              </select>
-            </div>
-          )}
-          {currentQuery && showSearchHighlights && (
-            <span className="text-sm text-blue-600 font-medium">
-              {getMatchCountForCurrentPage()} matches found
-              {getTotalMatchCount() > 0 && (
-                <span className="ml-1 text-gray-500">
-                  (Match {getCurrentMatchGlobalPosition().current} of {getCurrentMatchGlobalPosition().total})
-                </span>
-              )}
-            </span>
-          )}
-          {currentQuery && showSearchHighlights && getMatchCountForCurrentPage() > 1 && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={navigateToPreviousMatch}
-                className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200"
-                title="Previous match on this page (← or P)"
-              >
-                ←
-              </button>
-              <span className="text-xs text-gray-600">
-                {currentMatchIndex + 1} of {getMatchCountForCurrentPage()}
-              </span>
-              <button
-                onClick={navigateToNextMatch}
-                className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs hover:bg-blue-200"
-                title="Next match on this page (→ or N)"
-              >
-                →
-              </button>
-            </div>
-          )}
-          {currentQuery && showSearchHighlights && getTotalMatchCount() > 1 && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={navigateToPreviousGlobalMatch}
-                className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200"
-                title="Previous match across all pages (Shift + ←)"
-              >
-                ⟵
-              </button>
-              <button
-                onClick={navigateToNextGlobalMatch}
-                className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs hover:bg-green-200"
-                title="Next match across all pages (Shift + →)"
-              >
-                ⟶
-              </button>
-            </div>
-          )}
-        </div>
+    <div className="w-full space-y-6">
+      {/* Header with title */}
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-white mb-3">Document Viewer</h2>
+        <p className="text-slate-300 text-lg">Navigate through pages and view search results with highlights</p>
       </div>
-      <div className="min-h-[300px] bg-gray-50 rounded-lg p-6 mb-4 overflow-x-auto" style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}>
-        {currentPageData ? (
-          <div className="whitespace-pre-wrap break-words text-gray-800 text-base">
-            {currentQuery && pageSearchResults.length === 0 && (
-              <div className="mb-4 p-3 bg-gray-100 rounded-lg text-gray-600 text-sm">
-                💡 No search results found for "{currentQuery}" on this page. 
-                Try navigating to other pages or refining your search.
+
+      {/* Navigation and Controls Bar */}
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-600/30 p-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+          {/* Page Navigation */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="px-6 py-3 bg-slate-700/50 rounded-xl font-semibold text-slate-300 hover:bg-purple-500/20 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 border border-slate-600/50 hover:border-purple-500/50"
+            >
+              ← Previous
+            </button>
+            
+            <div className="text-center">
+              <div className="text-2xl font-bold text-white">
+                Page {currentPage} of {pdfData.total_pages}
               </div>
-            )}
-            <div ref={pageTextRef}
-              dangerouslySetInnerHTML={{
-                __html: (() => {
-                  if (highlightMethod === 'simple') {
-                    return simpleHighlight(currentPageData.text, currentQuery);
-                  } else if (highlightMethod === 'regex') {
-                    return highlightAllMatches(currentPageData.text, currentQuery);
-                  } else {
-                    // Use exact match positions from the server when available
-                    const exactMatches = pageSearchResults.flatMap(r => (r.exact_matches || []));
-                    const sourceText = (pageSearchResults.find(r => r.full_text)?.full_text || currentPageData.text).normalize('NFC');
-                    return highlightWithExactMatches(sourceText, currentQuery, exactMatches);
-                  }
-                })()
-              }}
-            />
-            {pageSearchResults.length > 0 && (
-              <div className="mt-6 border-t pt-4">
-                <h4 className="font-semibold text-gray-700 mb-2">
-                  Search Results for "{currentQuery}" on this Page ({pageSearchResults.length} results):
-                </h4>
-                {pageSearchResults.map((result, index) => (
-                  <div key={index} className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-2">
-                    <div className="text-yellow-700 text-xs mb-1">
-                      Similarity: {Math.round(result.score * 100)}% | 
-                      Score: {result.score.toFixed(3)}
-                      {result.exact_matches && (
-                        <span className="ml-2 text-green-600">
-                          • {result.exact_matches.length} exact matches
-                        </span>
-                      )}
-                      {result.match_count && (
-                        <span className="ml-2 text-blue-600">
-                          • {result.match_count} matches found
-                        </span>
-                      )}
-                    </div>
-                    <div 
-                      className="text-gray-700 text-sm leading-relaxed"
-                      dangerouslySetInnerHTML={{
-                        __html: highlightSearchResult(result.text, currentQuery)
-                      }}
-                    />
-                  </div>
-                ))}
-                {getMatchCountForCurrentPage() > 1 && (
-                  <div className="text-xs text-gray-500 mt-2 p-2 bg-gray-50 rounded">
-                    💡 <strong>Navigation:</strong> Use ← → arrow keys or P/N keys to navigate between matches on this page.
-                    {getTotalMatchCount() > 1 && (
-                      <span className="ml-2">
-                        Use Shift + ← → to navigate across all pages.
-                      </span>
+              {currentQuery && (
+                <div className="text-purple-400 text-sm mt-1">
+                  Searching for "{currentQuery}"
+                </div>
+              )}
+            </div>
+            
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= pdfData.total_pages}
+              className="px-6 py-3 bg-slate-700/50 rounded-xl font-semibold text-slate-300 hover:bg-purple-500/20 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 border border-slate-600/50 hover:border-purple-500/50"
+            >
+              Next →
+            </button>
+          </div>
+
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleZoomChange(zoom - 0.1)}
+              disabled={zoom <= 0.5}
+              className="w-10 h-10 bg-slate-700/50 rounded-xl font-bold text-lg text-slate-300 hover:bg-blue-500/20 hover:text-white disabled:opacity-50 transition-all duration-300 border border-slate-600/50 hover:border-blue-500/50"
+            >
+              -
+            </button>
+            <span className="font-medium text-white text-lg min-w-[60px] text-center">{Math.round(zoom * 100)}%</span>
+            <button
+              onClick={() => handleZoomChange(zoom + 0.1)}
+              disabled={zoom >= 3}
+              className="w-10 h-10 bg-slate-700/50 rounded-xl font-bold text-lg text-slate-300 hover:bg-blue-500/20 hover:text-white disabled:opacity-50 transition-all duration-300 border border-slate-600/50 hover:border-blue-500/50"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Search Controls */}
+          {currentQuery && (
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-3 text-white cursor-pointer">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={showSearchHighlights}
+                    onChange={(e) => setShowSearchHighlights(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-6 h-6 rounded-lg border-2 transition-all duration-300 ${
+                    showSearchHighlights 
+                      ? 'bg-purple-500 border-purple-500' 
+                      : 'bg-transparent border-slate-400'
+                  }`}>
+                    {showSearchHighlights && (
+                      <svg className="w-4 h-4 text-white mx-auto mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
                     )}
+                  </div>
+                </div>
+                <span className="text-sm font-medium">Show Highlights</span>
+              </label>
+
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 text-sm">Method:</span>
+                <select
+                  value={highlightMethod}
+                  onChange={(e) => setHighlightMethod(e.target.value)}
+                  className="px-3 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50"
+                >
+                  <option value="auto">Auto</option>
+                  <option value="simple">Simple</option>
+                  <option value="regex">Regex</option>
+                </select>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Search Results Summary */}
+        {currentQuery && showSearchHighlights && (
+          <div className="mt-6 pt-6 border-t border-slate-600/30">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 rounded-xl border border-purple-500/30">
+                  <svg className="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                  </svg>
+                  <span className="text-purple-300 font-semibold">
+                    {getMatchCountForCurrentPage()} matches found on this page
+                  </span>
+                </div>
+                
+                {getTotalMatchCount() > 0 && (
+                  <div className="text-blue-300 text-sm">
+                    Total: {getTotalMatchCount()} matches across all pages
                   </div>
                 )}
               </div>
-            )}
+
+              {/* Match Navigation */}
+              {getMatchCountForCurrentPage() > 1 && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={navigateToPreviousMatch}
+                    className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl hover:bg-blue-500/30 transition-colors duration-300 border border-blue-500/30 flex items-center justify-center"
+                    title="Previous match on this page (← or P)"
+                  >
+                    ←
+                  </button>
+                  <span className="text-white font-medium">
+                    {currentMatchIndex + 1} of {getMatchCountForCurrentPage()}
+                  </span>
+                  <button
+                    onClick={navigateToNextMatch}
+                    className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-xl hover:bg-blue-500/30 transition-colors duration-300 border border-blue-500/30 flex items-center justify-center"
+                    title="Next match on this page (→ or N)"
+                  >
+                    →
+                  </button>
+                </div>
+              )}
+
+              {/* Global Navigation */}
+              {getTotalMatchCount() > 1 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={navigateToPreviousGlobalMatch}
+                    className="w-10 h-10 bg-green-500/20 text-green-400 rounded-xl hover:bg-green-500/30 transition-colors duration-300 border border-green-500/30 flex items-center justify-center"
+                    title="Previous match across all pages (Shift + ←)"
+                  >
+                    ⟵
+                  </button>
+                  <button
+                    onClick={navigateToNextGlobalMatch}
+                    className="w-10 h-10 bg-green-500/20 text-green-400 rounded-xl hover:bg-green-500/30 transition-colors duration-300 border border-green-500/30 flex items-center justify-center"
+                    title="Next match across all pages (Shift + →)"
+                  >
+                    ⟶
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        ) : (
-          <div className="text-center text-gray-400">Page {currentPage} not found</div>
         )}
       </div>
+
+      {/* Document Content */}
+      <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl border border-slate-600/30 p-8 overflow-hidden">
+        <div 
+          className="min-h-[500px] overflow-x-auto relative"
+          style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
+        >
+          {currentPageData ? (
+            <div className="whitespace-pre-wrap break-words text-slate-200 text-lg leading-relaxed">
+              {/* No Results Message */}
+              {currentQuery && pageSearchResults.length === 0 && (
+                <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-300">
+                  <div className="flex items-center gap-3">
+                    <svg className="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <div>
+                      <p className="font-semibold">No search results found for "{currentQuery}" on this page.</p>
+                      <p className="text-sm opacity-80">Try navigating to other pages or refining your search.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Page Text with Highlights */}
+              <div 
+                ref={pageTextRef}
+                className="prose prose-invert max-w-none"
+                dangerouslySetInnerHTML={{
+                  __html: (() => {
+                    if (highlightMethod === 'simple') {
+                      return simpleHighlight(currentPageData.text, currentQuery);
+                    } else if (highlightMethod === 'regex') {
+                      return highlightAllMatches(currentPageData.text, currentQuery);
+                    } else {
+                      // Use exact match positions from the server when available
+                      const exactMatches = pageSearchResults.flatMap(r => (r.exact_matches || []));
+                      const sourceText = (pageSearchResults.find(r => r.full_text)?.full_text || currentPageData.text).normalize('NFC');
+                      return highlightWithExactMatches(sourceText, currentQuery, exactMatches);
+                    }
+                  })()
+                }}
+              />
+
+              {/* Page Search Results */}
+              {pageSearchResults.length > 0 && (
+                <div className="mt-8 pt-6 border-t border-slate-600/30">
+                  <h4 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    Search Results for "{currentQuery}" on this Page
+                  </h4>
+                  
+                  <div className="space-y-4">
+                    {pageSearchResults.map((result, index) => (
+                      <div key={index} className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-4 text-sm">
+                            <span className="px-3 py-1 bg-yellow-500/20 text-yellow-300 rounded-lg border border-yellow-500/30">
+                              Similarity: {Math.round(result.score * 100)}%
+                            </span>
+                            <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-lg border border-blue-500/30">
+                              Score: {result.score.toFixed(3)}
+                            </span>
+                            {result.exact_matches && (
+                              <span className="px-3 py-1 bg-green-500/20 text-green-300 rounded-lg border border-green-500/30">
+                                {result.exact_matches.length} exact matches
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div 
+                          className="text-slate-200 text-base leading-relaxed"
+                          dangerouslySetInnerHTML={{
+                            __html: highlightSearchResult(result.text, currentQuery)
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Navigation Help */}
+                  {getMatchCountForCurrentPage() > 1 && (
+                    <div className="mt-4 p-4 bg-slate-700/30 rounded-xl border border-slate-600/30">
+                      <div className="flex items-center gap-2 text-slate-300 text-sm">
+                        <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>
+                          <strong>Navigation:</strong> Use ← → arrow keys or P/N keys to navigate between matches on this page.
+                          {getTotalMatchCount() > 1 && (
+                            <span className="ml-2">
+                              Use Shift + ← → to navigate across all pages.
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center text-slate-400 text-lg">Page {currentPage} not found</div>
+          )}
+        </div>
+      </div>
+
+      {/* Search Summary */}
       {searchResults?.results?.length > 0 && (
-        <div className="bg-blue-50 border-t border-blue-200 rounded-lg p-4 mt-4">
-          <h4 className="font-semibold text-blue-700 mb-2">Search Summary</h4>
-          <p className="text-blue-700 mb-2">
+        <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-xl rounded-2xl border border-blue-500/30 p-6">
+          <h4 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+            Search Summary
+          </h4>
+          
+          <p className="text-blue-200 mb-4 text-lg">
             Found {searchResults.results.length} results for "{currentQuery}" across {searchResults.total_pages} pages
             {getTotalMatchCount() > 0 && (
-              <span className="ml-2 text-blue-600">
+              <span className="ml-2 text-blue-300 font-semibold">
                 ({getTotalMatchCount()} total matches)
               </span>
             )}
           </p>
-          <div className="flex flex-wrap gap-2">
+          
+          <div className="flex flex-wrap gap-3 mb-4">
             {searchResults.results.map((result, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentPage(result.page)}
-                className={`px-3 py-1 rounded-full border text-sm font-medium transition-colors ${currentPage === result.page ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-700 border-blue-300 hover:bg-blue-100'}`}
+                className={`px-4 py-2 rounded-xl border text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                  currentPage === result.page 
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-lg' 
+                    : 'bg-white/10 text-blue-300 border-blue-500/30 hover:bg-blue-500/20 hover:border-blue-500/50'
+                }`}
               >
                 Page {result.page} ({Math.round(result.score * 100)}%)
               </button>
             ))}
           </div>
-          <div className="text-xs text-blue-600 mt-2">
-            💡 Click on a page number to jump to that page and see the matches highlighted.
+          
+          <div className="text-blue-300 text-sm flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Click on a page number to jump to that page and see the matches highlighted.
           </div>
         </div>
       )}
