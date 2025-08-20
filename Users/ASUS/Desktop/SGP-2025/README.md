@@ -105,6 +105,8 @@ npm install
 ```bash
 cd server
 # Activate virtual environment if not already activated
+.\venv\Scripts\Activate.ps1
+pip install -r requirements_flask.txt
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
